@@ -21,6 +21,7 @@
         limitations under the License.
     "/>
     <script src="json2.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Quantico&display=swap" rel="stylesheet">
   </head> 
   <body bgcolor="white" height="100%" width="100%"> 
     <div id="debug"></div>
@@ -36,6 +37,30 @@ var H = canvas.height = window.innerHeight-50;
 var wscounter = 0;
 var socket;
 
+// 1000 digits of pi
+var pi = "3.14159265358979323846264338327950288419716939937510\
+  58209749445923078164062862089986280348253421170679\
+  82148086513282306647093844609550582231725359408128\
+  48111745028410270193852110555964462294895493038196\
+  44288109756659334461284756482337867831652712019091\
+  45648566923460348610454326648213393607260249141273\
+  72458700660631558817488152092096282925409171536436\
+  78925903600113305305488204665213841469519415116094\
+  33057270365759591953092186117381932611793105118548\
+  07446237996274956735188575272489122793818301194912\
+  98336733624406566430860213949463952247371907021798\
+  60943702770539217176293176752384674818467669405132\
+  00056812714526356082778577134275778960917363717872\
+  14684409012249534301465495853710507922796892589235\
+  42019956112129021960864034418159813629774771309960\
+  51870721134999999837297804995105973173281609631859\
+  50244594553469083026425223082533446850352619311881\
+  71010003137838752886587533208381420617177669147303\
+  59825349042875546873115956286388235378759375195778\
+  18577805321712268066130019278766111959092164201989"
+// index to keep track of what the next digit we should use is.
+var piIdx = 0;
+
 function debug(str) {
     var debugDiv = document.getElementById('debug');
     debugDiv.innerHTML = "" + str;
@@ -44,27 +69,18 @@ debug("Test");
 
 world = {};
 
-//XXX: TODO Make this prettier!
-function drawCircle(context,entity) {
+function drawDigit(context,entity) {
     with(context) {
-        beginPath();                
-        lineWidth = 3;
-        var x = entity["x"];
-        var y = entity["y"];
-        //moveTo(x,y);
         fillStyle = entity["colour"];
-        strokeStyle = fillStyle;
-        arc(x, y, (entity["radius"])?entity["radius"]:50, 0, 2.0 * Math.PI, false);  
-        stroke();                                
+        font = "40px Quantico";
+        // Draw the entity by looking at the digit of pi it has inside of it.
+        fillText(entity["digit"], entity["x"], entity["y"]);
     }
 }
 
 function prepEntity(entity) {
     if (!entity["colour"]) {
         entity["colour"] = "#FF0000";
-    }
-    if (!entity["radius"]) {
-        entity["radius"] = 50;
     }
     return entity;
 }
@@ -83,7 +99,7 @@ function renderFrame() {
     clearFrame();
     for (var key in world) {
         var entity = world[key];
-        drawCircle(context,prepEntity(entity));
+        drawDigit(context,prepEntity(entity));
     }
 }
 
@@ -122,6 +138,8 @@ function getPosition(e) {
 }
 
 function addEntity(entity, data) {
+    data["digit"] = pi[piIdx];
+    piIdx = (piIdx + 1) % pi.length;
     world[entity] = data;
     drawNextFrame(); // (but should we?)
     socket.send(JSON.stringify({ [entity]: data }));
@@ -129,7 +147,8 @@ function addEntity(entity, data) {
 
 var counter = 0;
 function addEntityWithoutName(data) {
-    var name = "X"+(counter++)%100;
+    // Edited from 100 to 314, to allow 314 objects on the canvas at a time.
+    var name = "X"+(counter++)%314;
     addEntity(name,data);
 }
 
@@ -232,7 +251,7 @@ mouse = (function() {
 // Add the application specific mouse listeners!
 //XXX: TODO Make these prettier!
 mouse.mousedowners.push(function(x,y,clicked,e) {
-    addEntityWithoutName({'x':x,'y':y,'colour':'blue'});
+    addEntityWithoutName({'x':x,'y':y,'colour':'red'});
 });
 
 mouse.mouseuppers.push(function(x,y,clicked,e) {
@@ -240,30 +259,22 @@ mouse.mouseuppers.push(function(x,y,clicked,e) {
 });
 
 mouse.mousedraggers.push(function(x,y,clicked,e) {
-    addEntityWithoutName({'x':x,'y':y,'colour':'green',
+    addEntityWithoutName({'x':x,'y':y,'colour':'white',
                           'radius':10});
 });
-
 
 function update() {
     drawFrame();
 }
 
-
 function wsSetup() {
+    // Note: the URL given to us was using the wrong port (uses port 5000)
     var url = "ws://localhost:8000/subscribe";   
-    console.log(url);
     socket = new WebSocket(url);
-    socket.onopen = function() {
-        // TODO
-    };
-    socket.onerror = function(msg) {
-        debug("WebSocket Error:" + msg.data);
-        
-    };
+    socket.onopen = function() {};
+    socket.onerror = function(msg) {};
     socket.onmessage = function(msg) {  
         try {
-            debug("WebSocket Recv:" + msg.data);
             let packet = JSON.parse(msg.data);
             world[Object.keys(packet)[0]] = Object.values(packet)[0];
             drawNextFrame();
