@@ -267,8 +267,7 @@ function update() {
 }
 
 function wsSetup() {
-    // Note: the URL given to us was using the wrong port (uses port 5000)
-    var url = "ws://localhost:8000/subscribe";   
+    var url = "ws://"+host+"/subscribe";
     socket = new WebSocket(url);
     socket.onopen = function() {};
     socket.onerror = function(msg) {};

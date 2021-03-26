@@ -20,7 +20,7 @@ pip install -r requirements.txt
 Collaboration
 =============================
 
-I discussed how to approach the assignment and any issues I ran into together with Vinny Luu. I helped Hongfang Xu by clarifying some confusions he had regarding the assignment and its requirements. 
+I discussed how to approach the assignment and any issues I ran into together with Vinny Luu. I helped Hongfang Xu and Monica Uwalaka by clarifying some confusions they had regarding the assignment and its requirements.
 
 Sources
 =============================
